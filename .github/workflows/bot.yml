@@ -4,12 +4,34 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
-  test:
+  run-bot:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - run: echo "Workflow berhasil dibaca"
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Download Telegram Bots library
+        run: |
+          mkdir -p lib
+          curl -L "https://repo1.maven.org/maven2/org/telegram/telegrambots/3.6/telegrambots-3.6.jar" -o lib/telegrambots.jar
+
+      - name: Compile bot
+        run: |
+          mkdir -p out
+          javac -cp "lib/telegrambots.jar" -d out src/*.java
+
+      - name: Run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          java -cp "out:lib/telegrambots.jar" Main
