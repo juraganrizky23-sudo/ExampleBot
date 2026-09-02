@@ -1,25 +1,19 @@
-import org.telegram.telegrambots.ApiContextInitializer;
-import org.telegram.telegrambots.TelegramBotsApi;
-import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-//this is the Main class, which will create new instance of the bot
 public class Main {
 
-	public static void main(String[] args) throws Exception {
+public static void main(String[] args) {
+    try {
+        TelegramBotsApi botsApi =
+                new TelegramBotsApi(DefaultBotSession.class);
 
-		//create new bot
-		ApiContextInitializer.init();
-		TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-		
-		//init bot (we try to create new bot, and throw exception if creation failed)
-		try {
-			telegramBotsApi.registerBot(new Bot());
-			System.out.println("Bot is online!");
-		} 
-		catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-		
-	}
-	
+        botsApi.registerBot(new Bot());
+
+        System.out.println("Bot is online!");
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
 }
