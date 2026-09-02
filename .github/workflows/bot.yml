@@ -1,64 +1,64 @@
 name: Telegram Bot
 
-on:
-push:
-branches:
-- master
-workflow_dispatch:
+"on":
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
-run-bot:
-runs-on: ubuntu-latest
+  run-bot:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Setup Java
-    uses: actions/setup-java@v5
-    with:
-      distribution: temurin
-      java-version: '11'
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '11'
 
-  - name: Prepare Maven
-    run: |
-      cat > pom.xml <<'EOF'
-      <project xmlns="http://maven.apache.org/POM/4.0.0"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
-        <groupId>bot</groupId>
-        <artifactId>telegram-bot</artifactId>
-        <version>1.0</version>
+      - name: Prepare Maven
+        run: |
+          cat > pom.xml <<'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>bot</groupId>
+            <artifactId>telegram-bot</artifactId>
+            <version>1.0</version>
 
-        <properties>
-          <maven.compiler.source>8</maven.compiler.source>
-          <maven.compiler.target>8</maven.compiler.target>
-        </properties>
+            <properties>
+              <maven.compiler.source>8</maven.compiler.source>
+              <maven.compiler.target>8</maven.compiler.target>
+            </properties>
 
-        <dependencies>
-          <dependency>
-            <groupId>org.telegram</groupId>
-            <artifactId>telegrambots</artifactId>
-            <version>6.9.7.1</version>
-          </dependency>
-        </dependencies>
-      </project>
-      EOF
+            <dependencies>
+              <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots</artifactId>
+                <version>6.9.7.1</version>
+              </dependency>
+            </dependencies>
+          </project>
+          EOF
 
-  - name: Download dependencies
-    run: |
-      mvn -q dependency:copy-dependencies \
-        -DoutputDirectory=lib \
-        -DincludeScope=runtime
+      - name: Download dependencies
+        run: |
+          mvn -q dependency:copy-dependencies \
+            -DoutputDirectory=lib \
+            -DincludeScope=runtime
 
-  - name: Compile bot
-    run: |
-      mkdir -p out
-      javac -cp "lib/*" -d out src/*.java
+      - name: Compile bot
+        run: |
+          mkdir -p out
+          javac -cp "lib/*" -d out src/*.java
 
-  - name: Run bot
-    env:
-      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-    run: |
-      java -cp "out:lib/*" Main
+      - name: Run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          java -cp "out:lib/*" Main
