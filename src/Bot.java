@@ -1,193 +1,60 @@
-import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.objects.Message;
-import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.exceptions.TelegramApiException;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class Bot extends TelegramLongPollingBot {
-
-private static final long OWNER_ID = 6699755661L;
-
-private final List<String> targets = new ArrayList<>();
-private volatile boolean spreading = false;
-
-@Override
-public String getBotUsername() {
-    return "bnkyyjseb_bot";
-}
-
-@Override
-public String getBotToken() {
-    String token = System.getenv("BOT_TOKEN");
-
-    if (token == null || token.trim().isEmpty()) {
-        throw new IllegalStateException("BOT_TOKEN belum diset!");
-    }
-
-    return token;
-}
-
-@Override
-public void onUpdateReceived(Update update) {
-    if (!update.hasMessage()) {
-        return;
-    }
-
-    Message message = update.getMessage();
-
-    if (!message.hasText()) {
-        return;
-    }
-
-    long userId = message.getFrom().getId();
-    String text = message.getText().trim();
-    long chatId = message.getChatId();
-
-    if (text.equals("/start") || text.equals("/help")) {
-        send(chatId,
-                "🤖 JASEB BOT\n\n" +
-                "/add CHAT_ID - tambah target\n" +
-                "/list - lihat target\n" +
-                "/remove CHAT_ID - hapus target\n" +
-                "/sebar PESAN - mulai sebar\n" +
-                "/stop - hentikan sebar");
-        return;
-    }
-
-    if (userId != OWNER_ID) {
-        return;
-    }
-
-    if (text.startsWith("/add ")) {
-        String target = text.substring(5).trim();
-
-        if (target.isEmpty()) {
-            send(chatId, "❌ Masukkan CHAT_ID target.");
-            return;
-        }
-
-        if (!targets.contains(target)) {
-            targets.add(target);
-            send(chatId, "✅ Target ditambahkan:\n" + target);
-        } else {
-            send(chatId, "⚠️ Target sudah ada.");
-        }
-        return;
-    }
-
-    if (text.equals("/list")) {
-        if (targets.isEmpty()) {
-            send(chatId, "📭 Belum ada target.");
-        } else {
-            StringBuilder result = new StringBuilder("📋 TARGET:\n\n");
-
-            for (int i = 0; i < targets.size(); i++) {
-                result.append(i + 1)
-                      .append(". ")
-                      .append(targets.get(i))
-                      .append("\n");
-            }
-
-            send(chatId, result.toString());
-        }
-        return;
-    }
-
-    if (text.startsWith("/remove ")) {
-        String target = text.substring(8).trim();
-
-        if (targets.remove(target)) {
-            send(chatId, "✅ Target dihapus:\n" + target);
-        } else {
-            send(chatId, "❌ Target tidak ditemukan.");
-        }
-        return;
-    }
-
-    if (text.startsWith("/sebar ")) {
-        String broadcast = text.substring(7).trim();
-
-        if (broadcast.isEmpty()) {
-            send(chatId, "❌ Pesan tidak boleh kosong.");
-            return;
-        }
-
-        if (targets.isEmpty()) {
-            send(chatId, "❌ Belum ada target. Tambahkan dengan /add CHAT_ID");
-            return;
-        }
-
-        if (spreading) {
-            send(chatId, "⚠️ Jaseb masih berjalan. Gunakan /stop untuk menghentikannya.");
-            return;
-        }
-
-        spreading = true;
-
-        new Thread(() -> {
-            int success = 0;
-            int failed = 0;
-
-            for (String target : new ArrayList<>(targets)) {
-                if (!spreading) {
-                    break;
-                }
-
-                try {
-                    SendMessage sendMessage = new SendMessage();
-                    sendMessage.setChatId(target);
-                    sendMessage.setText(broadcast);
-
-                    execute(sendMessage);
-                    success++;
-
-                    Thread.sleep(5000);
-
-                } catch (TelegramApiException e) {
-                    failed++;
-                    System.out.println("Gagal kirim ke " + target + ": " + e.getMessage());
-
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-
-            spreading = false;
-
-            send(chatId,
-                    "🏁 SELESAI\n\n" +
-                    "✅ Berhasil: " + success + "\n" +
-                    "❌ Gagal: " + failed);
-        }).start();
-
-        send(chatId, "🚀 Jaseb dimulai ke " + targets.size() + " target.");
-        return;
-    }
-
-    if (text.equals("/stop")) {
-        if (spreading) {
-            spreading = false;
-            send(chatId, "🛑 Jaseb dihentikan.");
-        } else {
-            send(chatId, "ℹ️ Jaseb sedang tidak berjalan.");
-        }
-    }
-}
-
-    private void send(long chatId, String text) {
-        try {
-            SendMessage message = new SendMessage();
-            message.setChatId(String.valueOf(chatId));
-            message.setText(text);
-
-            execute(message);
-
-        } catch (TelegramApiException e) {
-            System.out.println("Gagal mengirim pesan: " + e.getMessage());
-        }
-    }
-}
+com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:504)
+	at com.fasterxml.jackson.databind.deser.impl.FieldProperty.deserializeAndSet(FieldProperty.java:108)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:276)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:140)
+	at com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:504)
+	at com.fasterxml.jackson.databind.deser.impl.FieldProperty.deserializeAndSet(FieldProperty.java:108)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:276)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:140)
+	at com.fasterxml.jackson.databind.deser.std.CollectionDeserializer.deserialize(CollectionDeserializer.java:287)
+	at com.fasterxml.jackson.databind.deser.std.CollectionDeserializer.deserialize(CollectionDeserializer.java:259)
+	at com.fasterxml.jackson.databind.deser.std.CollectionDeserializer.deserialize(CollectionDeserializer.java:26)
+	at com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:504)
+	at com.fasterxml.jackson.databind.deser.impl.FieldProperty.deserializeAndSet(FieldProperty.java:108)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:276)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:140)
+	at com.fasterxml.jackson.databind.ObjectMapper._readMapAndClose(ObjectMapper.java:3798)
+	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:2861)
+	at org.telegram.telegrambots.api.methods.updates.GetUpdates.deserializeResponse(GetUpdates.java:114)
+	... 2 more
+Caused by: com.fasterxml.jackson.core.JsonParseException: Numeric value (6699755661) out of range of int
+ at [Source: {"ok":true,"result":[{"update_id":295485690,
+"message":{"message_id":1,"from":{"id":6699755661,"is_bot":false,"first_name":"bangkyy","username":"Sokkyyy","language_code":"id"},"chat":{"id":6699755661,"first_name":"bangkyy","username":"Sokkyyy","type":"private"},"date":1788367862,"text":"/start","entities":[{"offset":0,"length":6,"type":"bot_command"}]}}]}; line: 2, column: 50]
+	at com.fasterxml.jackson.core.JsonParser._constructError(JsonParser.java:1702)
+	at com.fasterxml.jackson.core.base.ParserMinimalBase._reportError(ParserMinimalBase.java:558)
+	at com.fasterxml.jackson.core.base.ParserBase.convertNumberToInt(ParserBase.java:928)
+	at com.fasterxml.jackson.core.base.ParserBase._parseIntValue(ParserBase.java:866)
+	at com.fasterxml.jackson.core.base.ParserBase.getIntValue(ParserBase.java:694)
+	at com.fasterxml.jackson.databind.deser.std.NumberDeserializers$IntegerDeserializer.deserialize(NumberDeserializers.java:306)
+	at com.fasterxml.jackson.databind.deser.std.NumberDeserializers$IntegerDeserializer.deserialize(NumberDeserializers.java:286)
+	at com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:504)
+	at com.fasterxml.jackson.databind.deser.impl.FieldProperty.deserializeAndSet(FieldProperty.java:108)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:276)
+	... 21 more
+Sep 02, 2026 4:53:16 PM org.telegram.telegrambots.logging.BotLogger severe
+SEVERE: BOTSESSION
+org.telegram.telegrambots.exceptions.TelegramApiRequestException: Unable to deserialize response
+	at org.telegram.telegrambots.api.methods.updates.GetUpdates.deserializeResponse(GetUpdates.java:122)
+	at org.telegram.telegrambots.updatesreceivers.DefaultBotSession$ReaderThread.getUpdatesFromServer(DefaultBotSession.java:262)
+	at org.telegram.telegrambots.updatesreceivers.DefaultBotSession$ReaderThread.run(DefaultBotSession.java:191)
+Caused by: com.fasterxml.jackson.databind.JsonMappingException: Numeric value (6699755661) out of range of int
+ at [Source: {"ok":true,"result":[{"update_id":295485690,
+"message":{"message_id":1,"from":{"id":6699755661,"is_bot":false,"first_name":"bangkyy","username":"Sokkyyy","language_code":"id"},"chat":{"id":6699755661,"first_name":"bangkyy","username":"Sokkyyy","type":"private"},"date":1788367862,"text":"/start","entities":[{"offset":0,"length":6,"type":"bot_command"}]}}]}; line: 2, column: 50]
+ at [Source: {"ok":true,"result":[{"update_id":295485690,
+"message":{"message_id":1,"from":{"id":6699755661,"is_bot":false,"first_name":"bangkyy","username":"Sokkyyy","language_code":"id"},"chat":{"id":6699755661,"first_name":"bangkyy","username":"Sokkyyy","type":"private"},"date":1788367862,"text":"/start","entities":[{"offset":0,"length":6,"type":"bot_command"}]}}]}; line: 2, column: 40] (through reference chain: org.telegram.telegrambots.api.objects.replykeyboard.ApiResponse["result"]->java.util.ArrayList[0]->org.telegram.telegrambots.api.objects.Update["message"]->org.telegram.telegrambots.api.objects.Message["from"]->org.telegram.telegrambots.api.objects.User["id"])
+	at com.fasterxml.jackson.databind.JsonMappingException.wrapWithPath(JsonMappingException.java:388)
+	at com.fasterxml.jackson.databind.JsonMappingException.wrapWithPath(JsonMappingException.java:348)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.wrapAndThrow(BeanDeserializerBase.java:1607)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:278)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:140)
+	at com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:504)
+	at com.fasterxml.jackson.databind.deser.impl.FieldProperty.deserializeAndSet(FieldProperty.java:108)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:276)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:140)
+	at com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:504)
+	at com.fasterxml.jackson.databind.deser.impl.FieldProperty.deserializeAndSet(FieldProperty.java:108)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:276)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:140)
+	at com.fasterxml.jackson.databind.deser.std.CollectionDeserializer.deserialize(CollectionDeserializer.java:287)
+	at com.fasterxml.jackson.databind.deser.std.CollectionDeserializer.deserialize(CollectionDeserializer.java:259)
+	at 
