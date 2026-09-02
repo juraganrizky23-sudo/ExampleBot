@@ -9,7 +9,6 @@ import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
-```
 private static final long OWNER_ID = 6699755661L;
 
 private final List<String> targets = new ArrayList<>();
