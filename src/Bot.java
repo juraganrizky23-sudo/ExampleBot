@@ -9,471 +9,186 @@ import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
-    // =========================
-    // KONFIGURASI OWNER
-    // =========================
+```
+private static final long OWNER_ID = 6699755661L;
 
-    private static final long OWNER_ID = 6699755661L;
+private final List<String> targets = new ArrayList<>();
+private volatile boolean spreading = false;
 
-    // Nama bot Telegram
-    private static final String BOT_USERNAME = "BOT_NAME_HERE";
+@Override
+public String getBotUsername() {
+    return "bnkyyjseb_bot";
+}
 
-    // Token dari @BotFather
-    private static final String BOT_TOKEN = "BOT_TOKEN_HERE";
+@Override
+public String getBotToken() {
+    String token = System.getenv("BOT_TOKEN");
 
-    // Jeda antar target (milidetik)
-    private static final long DELAY = 5000;
-
-    // Daftar target
-    private final List<String> targets = new ArrayList<String>();
-
-    // Status sebar
-    private volatile boolean spreading = false;
-
-
-    // =========================
-    // IDENTITAS BOT
-    // =========================
-
-    @Override
-    public String getBotUsername() {
-        return BOT_USERNAME;
+    if (token == null || token.trim().isEmpty()) {
+        throw new IllegalStateException("BOT_TOKEN belum diset!");
     }
 
-    @Override
-    public String getBotToken() {
-        return BOT_TOKEN;
+    return token;
+}
+
+@Override
+public void onUpdateReceived(Update update) {
+    if (!update.hasMessage()) {
+        return;
     }
 
+    Message message = update.getMessage();
 
-    // =========================
-    // PESAN MASUK
-    // =========================
+    if (!message.hasText()) {
+        return;
+    }
 
-    @Override
-    public void onUpdateReceived(Update update) {
+    long userId = message.getFrom().getId();
+    String text = message.getText().trim();
+    long chatId = message.getChatId();
 
-        if (!update.hasMessage()) {
+    if (text.equals("/start") || text.equals("/help")) {
+        send(chatId,
+                "🤖 JASEB BOT\n\n" +
+                "/add CHAT_ID - tambah target\n" +
+                "/list - lihat target\n" +
+                "/remove CHAT_ID - hapus target\n" +
+                "/sebar PESAN - mulai sebar\n" +
+                "/stop - hentikan sebar");
+        return;
+    }
+
+    if (userId != OWNER_ID) {
+        return;
+    }
+
+    if (text.startsWith("/add ")) {
+        String target = text.substring(5).trim();
+
+        if (target.isEmpty()) {
+            send(chatId, "❌ Masukkan CHAT_ID target.");
             return;
         }
 
-        Message message = update.getMessage();
-
-        if (message == null || !message.hasText()) {
-            return;
-        }
-
-        // Hanya owner yang boleh mengontrol bot
-        if (message.getFrom() == null ||
-                message.getFrom().getId() != OWNER_ID) {
-
-            SendMsg(
-                    message,
-                    "❌ Lu bukan owner bot."
-            );
-
-            return;
-        }
-
-        String text = message.getText().trim();
-
-        if (text.equals("/start")) {
-
-            showMenu(message);
-
-        } else if (text.equals("/help")) {
-
-            showHelp(message);
-
-        } else if (text.startsWith("/add ")) {
-
-            addTarget(message, text.substring(5).trim());
-
-        } else if (text.equals("/list")) {
-
-            listTargets(message);
-
-        } else if (text.startsWith("/remove ")) {
-
-            removeTarget(message, text.substring(8).trim());
-
-        } else if (text.equals("/stop")) {
-
-            stopSpread(message);
-
-        } else if (text.startsWith("/sebar ")) {
-
-            startSpread(
-                    message,
-                    text.substring(7).trim()
-            );
-
+        if (!targets.contains(target)) {
+            targets.add(target);
+            send(chatId, "✅ Target ditambahkan:\n" + target);
         } else {
-
-            SendMsg(
-                    message,
-                    "❓ Perintah tidak dikenal.\n\n" +
-                    "Ketik /help untuk melihat perintah."
-            );
+            send(chatId, "⚠️ Target sudah ada.");
         }
+        return;
     }
 
-
-    // =========================
-    // MENU
-    // =========================
-
-    private void showMenu(Message message) {
-
-        SendMsg(
-                message,
-                "🤖 BOT JASEB\n\n" +
-
-                "📢 /sebar <pesan>\n" +
-                "➕ /add <chat_id>\n" +
-                "📋 /list\n" +
-                "➖ /remove <chat_id>\n" +
-                "🛑 /stop\n" +
-                "❓ /help\n\n" +
-
-                "Owner ID: " + OWNER_ID
-        );
-    }
-
-
-    private void showHelp(Message message) {
-
-        SendMsg(
-                message,
-                "📖 CARA PAKAI\n\n" +
-
-                "1️⃣ Tambah target:\n" +
-                "/add -100123456789\n\n" +
-
-                "2️⃣ Lihat target:\n" +
-                "/list\n\n" +
-
-                "3️⃣ Sebar pesan:\n" +
-                "/sebar Halo semuanya!\n\n" +
-
-                "4️⃣ Hentikan proses:\n" +
-                "/stop\n\n" +
-
-                "5️⃣ Hapus target:\n" +
-                "/remove -100123456789\n\n" +
-
-                "⚠️ Bot hanya bisa mengirim ke chat " +
-                "yang memang memberikan izin kepada bot."
-        );
-    }
-
-
-    // =========================
-    // TAMBAH TARGET
-    // =========================
-
-    private void addTarget(
-            Message message,
-            String target) {
-
-        if (target.length() == 0) {
-
-            SendMsg(
-                    message,
-                    "❌ Format salah.\n\n" +
-                    "Contoh:\n" +
-                    "/add -100123456789"
-            );
-
-            return;
-        }
-
-        if (targets.contains(target)) {
-
-            SendMsg(
-                    message,
-                    "⚠️ Target sudah ada."
-            );
-
-            return;
-        }
-
-        targets.add(target);
-
-        SendMsg(
-                message,
-                "✅ Target berhasil ditambahkan.\n\n" +
-                "Target: " + target +
-                "\nTotal target: " + targets.size()
-        );
-    }
-
-
-    // =========================
-    // LIST TARGET
-    // =========================
-
-    private void listTargets(Message message) {
-
+    if (text.equals("/list")) {
         if (targets.isEmpty()) {
+            send(chatId, "📭 Belum ada target.");
+        } else {
+            StringBuilder result = new StringBuilder("📋 TARGET:\n\n");
 
-            SendMsg(
-                    message,
-                    "📭 Belum ada target."
-            );
+            for (int i = 0; i < targets.size(); i++) {
+                result.append(i + 1)
+                      .append(". ")
+                      .append(targets.get(i))
+                      .append("\n");
+            }
 
-            return;
+            send(chatId, result.toString());
         }
-
-        StringBuilder result =
-                new StringBuilder();
-
-        result.append("📋 DAFTAR TARGET\n\n");
-
-        for (int i = 0; i < targets.size(); i++) {
-
-            result.append(i + 1)
-                    .append(". ")
-                    .append(targets.get(i))
-                    .append("\n");
-        }
-
-        result.append("\nTotal: ")
-                .append(targets.size());
-
-        SendMsg(
-                message,
-                result.toString()
-        );
+        return;
     }
 
-
-    // =========================
-    // HAPUS TARGET
-    // =========================
-
-    private void removeTarget(
-            Message message,
-            String target) {
+    if (text.startsWith("/remove ")) {
+        String target = text.substring(8).trim();
 
         if (targets.remove(target)) {
-
-            SendMsg(
-                    message,
-                    "🗑️ Target berhasil dihapus.\n\n" +
-                    target
-            );
-
+            send(chatId, "✅ Target dihapus:\n" + target);
         } else {
-
-            SendMsg(
-                    message,
-                    "❌ Target tidak ditemukan."
-            );
+            send(chatId, "❌ Target tidak ditemukan.");
         }
+        return;
     }
 
+    if (text.startsWith("/sebar ")) {
+        String broadcast = text.substring(7).trim();
 
-    // =========================
-    // MULAI SEBAR
-    // =========================
-
-    private void startSpread(
-            Message message,
-            String content) {
-
-        if (targets.isEmpty()) {
-
-            SendMsg(
-                    message,
-                    "❌ Belum ada target.\n\n" +
-                    "Tambahkan dengan:\n" +
-                    "/add <chat_id>"
-            );
-
+        if (broadcast.isEmpty()) {
+            send(chatId, "❌ Pesan tidak boleh kosong.");
             return;
         }
 
-        if (content.length() == 0) {
-
-            SendMsg(
-                    message,
-                    "❌ Pesan kosong.\n\n" +
-                    "Contoh:\n" +
-                    "/sebar Halo semuanya!"
-            );
-
+        if (targets.isEmpty()) {
+            send(chatId, "❌ Belum ada target. Tambahkan dengan /add CHAT_ID");
             return;
         }
 
         if (spreading) {
-
-            SendMsg(
-                    message,
-                    "⚠️ Proses sebar masih berjalan.\n" +
-                    "Gunakan /stop untuk menghentikannya."
-            );
-
+            send(chatId, "⚠️ Jaseb masih berjalan. Gunakan /stop untuk menghentikannya.");
             return;
         }
 
         spreading = true;
 
-        final List<String> targetCopy =
-                new ArrayList<String>(targets);
+        new Thread(() -> {
+            int success = 0;
+            int failed = 0;
 
-        final String finalContent = content;
-
-        SendMsg(
-                message,
-                "🚀 SEBAR DIMULAI\n\n" +
-                "Total target: " +
-                targetCopy.size() +
-                "\nJeda: 5 detik"
-        );
-
-
-        // Jalankan proses sebar di thread terpisah
-        new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-
-                int success = 0;
-                int failed = 0;
-
-                for (String target : targetCopy) {
-
-                    if (!spreading) {
-                        break;
-                    }
-
-                    try {
-
-                        SendMessage sendMessage =
-                                new SendMessage();
-
-                        sendMessage.setChatId(target);
-                        sendMessage.setText(finalContent);
-
-                        execute(sendMessage);
-
-                        success++;
-
-                        System.out.println(
-                                "✅ Berhasil: " + target
-                        );
-
-                    } catch (TelegramApiException e) {
-
-                        failed++;
-
-                        System.out.println(
-                                "❌ Gagal: " + target
-                        );
-
-                        e.printStackTrace();
-                    }
-
-
-                    // Jeda antar target
-                    if (spreading) {
-
-                        try {
-
-                            Thread.sleep(DELAY);
-
-                        } catch (InterruptedException e) {
-
-                            Thread.currentThread()
-                                    .interrupt();
-
-                            break;
-                        }
-                    }
+            for (String target : new ArrayList<>(targets)) {
+                if (!spreading) {
+                    break;
                 }
 
+                try {
+                    SendMessage sendMessage = new SendMessage();
+                    sendMessage.setChatId(target);
+                    sendMessage.setText(broadcast);
 
-                boolean stopped =
-                        !spreading;
+                    execute(sendMessage);
+                    success++;
 
-                spreading = false;
+                    Thread.sleep(5000);
 
+                } catch (TelegramApiException e) {
+                    failed++;
+                    System.out.println("Gagal kirim ke " + target + ": " + e.getMessage());
 
-                System.out.println(
-                        "=========================="
-                );
-
-                System.out.println(
-                        "SEBAR SELESAI"
-                );
-
-                System.out.println(
-                        "Berhasil: " + success
-                );
-
-                System.out.println(
-                        "Gagal: " + failed
-                );
-
-                System.out.println(
-                        "=========================="
-                );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
 
+            spreading = false;
+
+            send(chatId,
+                    "🏁 SELESAI\n\n" +
+                    "✅ Berhasil: " + success + "\n" +
+                    "❌ Gagal: " + failed);
         }).start();
+
+        send(chatId, "🚀 Jaseb dimulai ke " + targets.size() + " target.");
+        return;
     }
 
-
-    // =========================
-    // STOP SEBAR
-    // =========================
-
-    private void stopSpread(Message message) {
-
-        if (!spreading) {
-
-            SendMsg(
-                    message,
-                    "ℹ️ Tidak ada proses sebar yang berjalan."
-            );
-
-            return;
+    if (text.equals("/stop")) {
+        if (spreading) {
+            spreading = false;
+            send(chatId, "🛑 Jaseb dihentikan.");
+        } else {
+            send(chatId, "ℹ️ Jaseb sedang tidak berjalan.");
         }
-
-        spreading = false;
-
-        SendMsg(
-                message,
-                "🛑 Proses sebar dihentikan."
-        );
     }
+}
 
-
-    // =========================
-    // KIRIM PESAN
-    // =========================
-
-    public void SendMsg(
-            Message message,
-            String text) {
-
-        SendMessage sendMessage =
-                new SendMessage();
-
-        sendMessage.setChatId(
-                message.getChatId().toString()
-        );
-
-        sendMessage.setText(text);
-
+    private void send(long chatId, String text) {
         try {
+            SendMessage message = new SendMessage();
+            message.setChatId(String.valueOf(chatId));
+            message.setText(text);
 
-            execute(sendMessage);
+            execute(message);
 
         } catch (TelegramApiException e) {
-
-            e.printStackTrace();
+            System.out.println("Gagal mengirim pesan: " + e.getMessage());
         }
     }
-			}
+}
