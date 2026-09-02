@@ -188,9 +188,7 @@ private void send(long chatId, String text) {
 
         execute(message);
 
-    } catch (TelegramApiException e) {
-     S System.out.println("Gagal mengirim pesan: " + e.getMessage());
-    }
+} catch (TelegramApiException e) {
+    System.out.println("Gagal mengirim pesan: " + e.getMessage());
 }
 
-}
